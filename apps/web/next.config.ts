@@ -1,7 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@travel-buddy/types'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'places.googleapis.com' },

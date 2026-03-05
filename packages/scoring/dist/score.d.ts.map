@@ -1,0 +1,1 @@
+{"version":3,"file":"score.d.ts","sourceRoot":"","sources":["../src/score.ts"],"names":[],"mappings":"AAIA,OAAO,KAAK,EACV,eAAe,EACf,YAAY,EACZ,cAAc,EACd,iBAAiB,EAElB,MAAM,qBAAqB,CAAC;AAoJ7B;;;GAGG;AACH,wBAAgB,aAAa,CAC3B,IAAI,EAAE,eAAe,EACrB,KAAK,EAAE,iBAAiB,GACvB,cAAc,CA2DhB;AAED;;;GAGG;AACH,wBAAgB,YAAY,CAC1B,UAAU,EAAE,eAAe,EAAE,EAC7B,KAAK,EAAE,iBAAiB,GACvB,YAAY,EAAE,CA2BhB"}
