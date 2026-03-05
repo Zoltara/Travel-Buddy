@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: travel-buddy-api
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: apps/api
+    buildCommand: corepack enable && pnpm install && cd ../.. && pnpm --filter @travel-buddy/api build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEON_DATABASE_URL
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
