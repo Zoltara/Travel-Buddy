@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapis.vercel.sh/vercel.json",
-  "buildCommand": "cd ../.. && pnpm turbo build --filter=@travel-buddy/web",
+  "buildCommand": "cd ../.. && pnpm install && pnpm --filter @travel-buddy/types build && pnpm --filter @travel-buddy/scoring build && pnpm --filter @travel-buddy/web build",
   "devCommand": "pnpm dev",
   "installCommand": "pnpm install",
   "framework": "nextjs",
