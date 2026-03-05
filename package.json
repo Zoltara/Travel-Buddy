@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:api": "pnpm --filter @travel-buddy/types build && pnpm --filter @travel-buddy/scoring build && pnpm --filter @travel-buddy/api build",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
