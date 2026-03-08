@@ -15,18 +15,21 @@ export function applyHardFilters(properties, prefs) {
         }
         // ── Price filter ───────────────────────────────────────────────────────
         if (prop.aggregatedPricePerNight !== null) {
-            if (prop.aggregatedPricePerNight < prefs.budgetPerNightMin) {
-                reasons.push(`Price $${prop.aggregatedPricePerNight}/night below minimum budget $${prefs.budgetPerNightMin}`);
-            }
+            // Only filter out if over budget (cheaper is always better!)
             if (!prefs.flexibleBudget &&
                 prop.aggregatedPricePerNight > prefs.budgetPerNightMax) {
                 reasons.push(`Price $${prop.aggregatedPricePerNight}/night exceeds budget $${prefs.budgetPerNightMax}`);
+            }
+            // Allow 10% over budget if flexible
+            if (prefs.flexibleBudget &&
+                prop.aggregatedPricePerNight > prefs.budgetPerNightMax * 1.1) {
+                reasons.push(`Price $${prop.aggregatedPricePerNight}/night exceeds flexible budget $${Math.round(prefs.budgetPerNightMax * 1.1)}`);
             }
         }
         // ── Complaint category filter ──────────────────────────────────────────
         for (const summary of prop.complaintSummaries) {
             if (prefs.avoidComplaintCategories.includes(summary.category) &&
-                summary.mentionRate > 0.15 // >15% mentions = dealbreaker
+                summary.mentionRate > 0.20 // >20% mentions = dealbreaker (was 15%)
             ) {
                 reasons.push(`High ${summary.category} complaints (${Math.round(summary.mentionRate * 100)}% of reviews)`);
             }

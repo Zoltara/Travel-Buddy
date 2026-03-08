@@ -117,12 +117,14 @@ function buildUserPrompt(prefs: SearchPreferences): string {
 - Destination: ${prefs.city}, ${prefs.country}${prefs.area ? ` (${prefs.area})` : ''}
 - Check-in: ${prefs.checkIn ?? 'flexible'} | Check-out: ${prefs.checkOut ?? 'flexible'} (${nights} nights)
 - Guests: ${prefs.guests ?? 2}
-- Budget per night: $${prefs.budgetPerNightMin ?? 0}–$${prefs.budgetPerNightMax ?? 9999} USD${prefs.flexibleBudget ? ' (flexible)' : ''}
+- Budget per night: $${prefs.budgetPerNightMin ?? 0}–$${prefs.budgetPerNightMax ?? 9999} USD${prefs.flexibleBudget ? ' (flexible - can show slightly over)' : ' (strict - do not exceed)'}
 - Resort types wanted: ${prefs.resortTypes.join(', ')}
 - Must-have amenities: ${prefs.mustHaveAmenities.length > 0 ? prefs.mustHaveAmenities.join(', ') : 'none specified'}
-- Minimum rating: ${prefs.minRating ?? 7}/10
-- Minimum reviews: ${prefs.minReviewCount ?? 50}
-- Avoid complaints about: ${prefs.avoidComplaintCategories.length > 0 ? prefs.avoidComplaintCategories.join(', ') : 'none'}
+- Minimum rating: ${prefs.minRating ?? 7}/10 — ALL resorts must have ratings >= this
+- Minimum reviews: ${prefs.minReviewCount ?? 50} — ALL resorts must have review counts >= this
+- Avoid high complaints about: ${prefs.avoidComplaintCategories.length > 0 ? prefs.avoidComplaintCategories.join(', ') + ' (keep mentionRate < 0.10)' : 'none'}
+
+IMPORTANT: Generate 12 resorts that ALL meet these requirements. Do not return resorts below the minimum rating or review count. Keep all prices within budget range.
 
 Return exactly 12 resort properties as a JSON array matching this TypeScript type:
 
@@ -165,6 +167,13 @@ export class OpenRouterAdapter implements PlatformAdapter {
   readonly isAvailable = true; // always available — just needs the API key in env
 
   async search(preferences: SearchPreferences): Promise<RawPropertyData[]> {
+    console.log('[OpenRouter] Starting search with preferences:', {
+      destination: `${preferences.city}, ${preferences.country}`,
+      budget: `$${preferences.budgetPerNightMin}-$${preferences.budgetPerNightMax}`,
+      guests: preferences.guests,
+      types: preferences.resortTypes,
+    });
+
     const messages: OpenRouterMessage[] = [
       { role: 'system', content: buildSystemPrompt() },
       { role: 'user', content: buildUserPrompt(preferences) },
@@ -183,23 +192,27 @@ export class OpenRouterAdapter implements PlatformAdapter {
         messages,
         temperature: 0.4,     // lower = more factual/consistent
         max_tokens: 8192,
-        response_format: { type: 'json_object' },
       }),
     });
 
     if (!response.ok) {
       const text = await response.text();
+      console.error('[OpenRouter] API error:', response.status, text);
       throw new Error(`OpenRouter API error ${response.status}: ${text}`);
     }
 
     const data = (await response.json()) as OpenRouterResponse;
     const raw = data.choices[0]?.message.content ?? '[]';
+    
+    console.log('[OpenRouter] Raw response (first 500 chars):', raw.slice(0, 500));
 
     // Parse — the model may return {"resorts": [...]} or a bare array
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (err) {
+      console.error('[OpenRouter] JSON parse error:', err);
+      console.error('[OpenRouter] Raw content:', raw.slice(0, 1000));
       throw new Error(`OpenRouter returned invalid JSON: ${raw.slice(0, 200)}`);
     }
 
@@ -212,8 +225,11 @@ export class OpenRouterAdapter implements PlatformAdapter {
           : [];
 
     if (resorts.length === 0) {
+      console.error('[OpenRouter] Zero resorts in parsed response. Full response:', JSON.stringify(parsed, null, 2));
       throw new Error('OpenRouter returned zero resorts');
     }
+
+    console.log('[OpenRouter] Successfully parsed', resorts.length, 'resorts');
 
     const now = new Date().toISOString();
 

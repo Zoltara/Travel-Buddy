@@ -7,11 +7,21 @@ export const metadata: Metadata = {
   title: 'Travel Buddy – Stop comparing 47 tabs',
   description:
     'Tell me what to book. AI-powered resort decision engine that finds your top 3 perfect matches.',
+  applicationName: 'Travel Buddy',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Travel Buddy',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: 'Travel Buddy',
     description: 'Stop comparing 47 tabs. Get 3 perfect resort picks.',
     type: 'website',
   },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

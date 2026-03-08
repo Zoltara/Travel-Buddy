@@ -9,9 +9,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'media.tripadvisor.com' },
     ],
   },
-  env: {
-    NEXT_PUBLIC_GOOGLE_PLACES_KEY: process.env['GOOGLE_PLACES_API_KEY'] ?? '',
-  },
 };
 
 export default nextConfig;

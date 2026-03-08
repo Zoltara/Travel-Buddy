@@ -66,17 +66,38 @@ function ResultsContent() {
   }
 
   if (!data || data.results.length === 0) {
+    const hasSearchData = data && data.totalPropertiesFound > 0;
+    
     return (
       <div className="text-center py-16">
         <p className="text-4xl mb-3">🔍</p>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">No resorts found</h2>
-        <p className="text-gray-500 text-sm max-w-sm mx-auto">
-          We couldn&apos;t find resorts matching all your criteria. Try lowering your
-          minimum rating, increasing your budget, or relaxing some filters.
-        </p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">No resorts found</h2>
+        {hasSearchData ? (
+          <div className="text-gray-500 dark:text-slate-400 text-sm max-w-md mx-auto space-y-2">
+            <p>
+              We found {data.totalPropertiesFound} properties, but all {data.filteredOut} were 
+              eliminated by your filters.
+            </p>
+            <p className="font-medium text-gray-700 dark:text-slate-300">
+              Try adjusting:
+            </p>
+            <ul className="text-left inline-block text-xs space-y-1">
+              <li>• Lower your minimum rating (currently {state.typeFilters.minRating}/10)</li>
+              <li>• Increase your budget (currently ${state.dates.budgetPerNightMin}-${state.dates.budgetPerNightMax}/night)</li>
+              <li>• Enable &quot;flexible budget&quot;</li>
+              <li>• Remove some must-have amenities</li>
+              <li>• Try a different destination</li>
+            </ul>
+          </div>
+        ) : (
+          <p className="text-gray-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
+            We couldn&apos;t find any resorts for this location. Try a different destination
+            or check that your API is running correctly.
+          </p>
+        )}
         <button
           onClick={() => router.push('/search/type')}
-          className="mt-5 px-6 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700"
+          className="mt-5 px-6 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-colors"
         >
           Adjust filters
         </button>

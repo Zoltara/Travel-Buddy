@@ -3,12 +3,17 @@
 import { SearchProvider } from '@/lib/search-context';
 import { WizardProgress } from '@/components/wizard-progress';
 import { ThemeToggle } from '@/components/theme-toggle';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function SearchLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const showStartOver = pathname !== '/search/location';
+
   return (
     <SearchProvider>
       <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-sand-50 text-gray-900 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
@@ -24,6 +29,14 @@ export default function SearchLayout({
             <p className="text-sm text-gray-500 dark:text-slate-300 hidden sm:block">
               Stop comparing 47 tabs.
             </p>
+            {showStartOver && (
+              <Link
+                href="/search/location"
+                className="px-3 py-1.5 text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:hover:text-brand-200 border border-brand-300 dark:border-brand-700 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                Start Over
+              </Link>
+            )}
             <ThemeToggle />
           </div>
         </header>
