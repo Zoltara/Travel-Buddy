@@ -119,10 +119,11 @@ export async function searchRoutes(fastify: FastifyInstance): Promise<void> {
 
         return reply.status(200).send(response);
       } catch (err) {
-        fastify.log.error(err);
+        const message = err instanceof Error ? err.message : 'Failed to complete search. Please try again.';
+        fastify.log.error({ err, message }, 'Search failed');
         return reply.status(500).send({
           error: 'SEARCH_FAILED',
-          message: 'Failed to complete search. Please try again.',
+          message,
           statusCode: 500,
         });
       }

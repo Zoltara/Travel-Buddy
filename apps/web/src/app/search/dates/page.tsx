@@ -22,6 +22,21 @@ function todayPlus(days: number): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function todayIso(): string {
+  return todayPlus(0);
+}
+
+function addDays(date: string, days: number): string {
+  const parsed = parseDateOnly(date);
+  if (!parsed) return todayPlus(days);
+  const d = new Date(parsed.y, parsed.m - 1, parsed.d);
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = `${d.getMonth() + 1}`.padStart(2, '0');
+  const dd = `${d.getDate()}`.padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function parseDateOnly(value: string): { y: number; m: number; d: number } | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return null;
@@ -47,10 +62,10 @@ export default function DatesPage() {
   const { state, dispatch } = useSearch();
 
   const [checkIn, setCheckIn] = useState(
-    state.dates.checkIn ?? todayPlus(30),
+    state.dates.checkIn ?? todayIso(),
   );
   const [checkOut, setCheckOut] = useState(
-    state.dates.checkOut ?? todayPlus(37),
+    state.dates.checkOut ?? addDays(state.dates.checkIn ?? todayIso(), 1),
   );
   const [currency, setCurrency] = useState<CurrencyCode>(
     state.dates.preferredCurrency ?? currencyForCountry(state.location.country),
@@ -123,8 +138,16 @@ export default function DatesPage() {
             <input
               type="date"
               value={checkIn}
-              min={todayPlus(1)}
-              onChange={(e) => setCheckIn(e.target.value)}
+              min={todayIso()}
+              onChange={(e) => {
+                const nextCheckIn = e.target.value;
+                setCheckIn(nextCheckIn);
+
+                // Keep checkout anchored to check-in if it becomes invalid.
+                if (!checkOut || checkOut <= nextCheckIn) {
+                  setCheckOut(addDays(nextCheckIn, 1));
+                }
+              }}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
@@ -133,7 +156,7 @@ export default function DatesPage() {
             <input
               type="date"
               value={checkOut}
-              min={checkIn ?? todayPlus(2)}
+              min={addDays(checkIn || todayIso(), 1)}
               onChange={(e) => setCheckOut(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />

@@ -88,22 +88,29 @@ function normalizeBookingUrl(
 
 function buildSystemPrompt(): string {
   return `You are a travel data expert with deep knowledge of resorts worldwide.
-Your job is to return realistic, accurate resort data for a given search query.
+Return a JSON object with a single key "resorts" whose value is an array of resort objects.
 
-RULES:
-- Return ONLY a valid JSON array, no markdown, no explanation, no code fences.
+CRITICAL: Generate resorts that MATCH the user's search criteria:
+- Prices MUST be within their budget range
+- Ratings MUST meet or exceed their minimum rating requirement
+- Review counts MUST meet or exceed their minimum review requirement
+- Include ALL must-have amenities they requested
+- Keep complaint mention rates LOW (under 10% for any category)
+
+FORMAT RULES:
+- Return ONLY valid JSON in the shape: {"resorts": [...]}
+- No markdown, no code fences, no extra text outside the JSON.
 - Use real resort names that actually exist at the requested destination.
 - Coordinates must be accurate (within ~500m of the actual resort).
-- Prices in USD per night. Be realistic for the destination and resort type.
-- Ratings on a 0–10 scale. Most good resorts are 7.5–9.2.
-- reviewCount should be realistic (budget resorts: 200–2000, luxury: 500–8000).
+- Prices in USD per night, WITHIN the user's stated budget range.
+- Ratings on a 0\u201310 scale. Most good resorts are 7.5\u20139.2.
+- reviewCount should be realistic (budget: 200\u20132000, mid-range: 500\u20133000, luxury: 1000\u20138000).
 - bookingUrl must be a real deep-link to that property on that platform.
-- distanceFromBeach in km (0 = on the beach, 0.3 = 300m away etc.).
-- complaintSummaries: include real common complaints if known, otherwise [].
-- mentionRate is a number 0–1 (e.g. 0.08 = 8% of reviews mention it).
-- resolvedTypes: pick from ["luxury","boutique","budget","family","adults_only","eco","overwater","ski","city"].
-- confirmedAmenities: pick from ["beachfront","spa","pool","gym","restaurant","bar","wifi","parking","airport_shuttle","kids_club","water_sports","golf"].
-- platforms: include 2–3 platforms per resort with different prices (slight variation is realistic).
+- distanceFromBeach in km (0 = on the beach, 0.3 = 300m away).
+- complaintSummaries: keep mentionRate below 0.10 (10%).
+- resolvedTypes: match the user's requested resort types when possible.
+- confirmedAmenities: MUST include any amenities listed in "Must-have amenities".
+- platforms: include 2\u20133 platforms per resort.
   platform values: "booking.com" | "expedia" | "tripadvisor" | "agoda"`.trim();
 }
 
@@ -157,7 +164,7 @@ interface Resort {
   fetchedAt: string;
 }
 
-Return ONLY the JSON array. No other text.`;
+Return a JSON object: { "resorts": [ ...exactly 12 resort objects... ] }. No other text.`;
 }
 
 // ── Adapter ───────────────────────────────────────────────────────────────────
@@ -190,8 +197,9 @@ export class OpenRouterAdapter implements PlatformAdapter {
       body: JSON.stringify({
         model: env.OPENROUTER_MODEL,
         messages,
-        temperature: 0.4,     // lower = more factual/consistent
+        temperature: 0.4,
         max_tokens: 8192,
+        response_format: { type: 'json_object' },
       }),
     });
 
@@ -202,8 +210,12 @@ export class OpenRouterAdapter implements PlatformAdapter {
     }
 
     const data = (await response.json()) as OpenRouterResponse;
-    const raw = data.choices[0]?.message.content ?? '[]';
-    
+    let raw = data.choices[0]?.message.content ?? '{}';
+
+    // Strip markdown code fences if the model ignores response_format
+    const fenceMatch = /```(?:json)?\s*([\s\S]*?)```/i.exec(raw);
+    if (fenceMatch?.[1]) raw = fenceMatch[1].trim();
+
     console.log('[OpenRouter] Raw response (first 500 chars):', raw.slice(0, 500));
 
     // Parse — the model may return {"resorts": [...]} or a bare array

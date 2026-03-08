@@ -103,7 +103,6 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       !dates.guests ||
       dates.budgetPerNightMin === undefined ||
       dates.budgetPerNightMax === undefined ||
-      !typeFilters.resortTypes?.length ||
       typeFilters.minRating === undefined ||
       typeFilters.minReviewCount === undefined ||
       !priorities.weights
@@ -127,7 +126,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       ...(dates.preferredCurrency !== undefined ? { preferredCurrency: dates.preferredCurrency } : {}),
       ...(dates.totalBudget !== undefined ? { totalBudget: dates.totalBudget } : {}),
       flexibleBudget: dates.flexibleBudget ?? false,
-      resortTypes: typeFilters.resortTypes,
+      resortTypes: typeFilters.resortTypes ?? [],
       mustHaveAmenities: typeFilters.mustHaveAmenities ?? [],
       minRating: typeFilters.minRating,
       minReviewCount: typeFilters.minReviewCount,

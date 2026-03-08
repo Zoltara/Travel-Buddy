@@ -28,6 +28,21 @@ function todayPlus(days: number): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function todayIso(): string {
+  return todayPlus(0);
+}
+
+function addDays(date: string, days: number): string {
+  const parsed = parseDateOnly(date);
+  if (!parsed) return todayPlus(days);
+  const d = new Date(parsed.y, parsed.m - 1, parsed.d);
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = `${d.getMonth() + 1}`.padStart(2, '0');
+  const dd = `${d.getDate()}`.padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function parseDateOnly(value: string): { y: number; m: number; d: number } | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return null;
@@ -48,8 +63,10 @@ export default function DatesScreen() {
   const router = useRouter();
   const { state, dispatch } = useSearch();
 
-  const [checkIn, setCheckIn] = useState(state.dates.checkIn ?? todayPlus(30));
-  const [checkOut, setCheckOut] = useState(state.dates.checkOut ?? todayPlus(37));
+  const [checkIn, setCheckIn] = useState(state.dates.checkIn ?? todayIso());
+  const [checkOut, setCheckOut] = useState(
+    state.dates.checkOut ?? addDays(state.dates.checkIn ?? todayIso(), 1),
+  );
   const [currency, setCurrency] = useState<CurrencyCode>(
     state.dates.preferredCurrency ?? currencyForCountry(state.location.country),
   );
@@ -88,7 +105,17 @@ export default function DatesScreen() {
       <Text style={styles.subtext}>We'll only show available resorts in your range.</Text>
 
       <Text style={styles.label}>Check-in date (YYYY-MM-DD)</Text>
-      <TextInput value={checkIn} onChangeText={setCheckIn} style={styles.input} placeholderTextColor="#9ca3af" />
+      <TextInput
+        value={checkIn}
+        onChangeText={(nextCheckIn) => {
+          setCheckIn(nextCheckIn);
+          if (!checkOut || checkOut <= nextCheckIn) {
+            setCheckOut(addDays(nextCheckIn, 1));
+          }
+        }}
+        style={styles.input}
+        placeholderTextColor="#9ca3af"
+      />
 
       <Text style={styles.label}>Check-out date (YYYY-MM-DD)</Text>
       <TextInput value={checkOut} onChangeText={setCheckOut} style={styles.input} placeholderTextColor="#9ca3af" />
