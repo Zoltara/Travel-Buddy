@@ -10,7 +10,6 @@ const nextConfig: NextConfig = {
     ],
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000',
     NEXT_PUBLIC_GOOGLE_PLACES_KEY: process.env['GOOGLE_PLACES_API_KEY'] ?? '',
   },
 };
