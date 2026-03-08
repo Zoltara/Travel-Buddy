@@ -2,6 +2,7 @@
 
 import { SearchProvider } from '@/lib/search-context';
 import { WizardProgress } from '@/components/wizard-progress';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function SearchLayout({
   children,
@@ -10,18 +11,21 @@ export default function SearchLayout({
 }) {
   return (
     <SearchProvider>
-      <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-sand-50">
+      <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-sand-50 text-gray-900 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
         {/* Header */}
         <header className="px-6 py-5 flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🗺️</span>
-            <span className="font-bold text-xl text-brand-700 tracking-tight">
+            <span className="font-bold text-xl text-brand-700 dark:text-brand-300 tracking-tight">
               Travel Buddy
             </span>
           </div>
-          <p className="text-sm text-gray-500 hidden sm:block">
-            Stop comparing 47 tabs.
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-gray-500 dark:text-slate-300 hidden sm:block">
+              Stop comparing 47 tabs.
+            </p>
+            <ThemeToggle />
+          </div>
         </header>
 
         {/* Wizard progress */}
