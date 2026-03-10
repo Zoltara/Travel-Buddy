@@ -110,9 +110,9 @@ function buildUserPrompt(prefs: SearchPreferences): string {
 - Minimum reviews: ${prefs.minReviewCount ?? 50} — ALL resorts must have review counts >= this
 - Avoid high complaints about: ${prefs.avoidComplaintCategories.length > 0 ? prefs.avoidComplaintCategories.join(', ') + ' (keep mentionRate < 0.10)' : 'none'}
 
-IMPORTANT: Generate 12 resorts that ALL meet these requirements. Do not return resorts below the minimum rating or review count. Keep all prices within budget range.
+IMPORTANT: Generate 6 resorts that ALL meet these requirements. Do not return resorts below the minimum rating or review count. Keep all prices within budget range.
 
-Return exactly 12 resort properties as a JSON array matching this TypeScript type:
+Return exactly 6 resort properties as a JSON array matching this TypeScript type:
 
 interface Resort {
   name: string;
@@ -143,7 +143,7 @@ interface Resort {
   fetchedAt: string;
 }
 
-Return a JSON object: { "resorts": [ ...exactly 12 resort objects... ] }. No other text.`;
+Return a JSON object: { "resorts": [ ...exactly 6 resort objects... ] }. No other text.`;
 }
 
 // ── Main search function ──────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ export async function searchWithOpenRouter(preferences: SearchPreferences): Prom
       model,
       messages,
       temperature: 0.4,
-      max_tokens: 8192,
+      max_tokens: 4096,
       response_format: { type: 'json_object' },
     }),
   });

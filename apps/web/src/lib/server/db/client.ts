@@ -10,8 +10,8 @@ let _db: NeonHttpDatabase<Schema> | null = null;
 export function getDb(): NeonHttpDatabase<Schema> {
   if (_db) return _db;
   const databaseUrl = process.env['NEON_DATABASE_URL'];
-  if (!databaseUrl) {
-    throw new Error('Missing required environment variable: NEON_DATABASE_URL');
+  if (!databaseUrl || databaseUrl.includes('ep-xxx')) {
+    throw new Error('NEON_DATABASE_URL is not configured. Search results will not be cached.');
   }
   const sql = neon(databaseUrl);
   _db = drizzle(sql, { schema });

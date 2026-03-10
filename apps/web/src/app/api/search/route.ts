@@ -84,13 +84,18 @@ export async function POST(request: NextRequest) {
   try {
     const response: SearchResponse = await runSearch(preferences);
 
-    const expiresAt = new Date(Date.now() + response.ttl * 1000);
-    await db.insert(searches).values({
-      id: response.searchId,
-      preferences,
-      results: response as unknown as Record<string, unknown>,
-      expiresAt,
-    });
+    // Persist to DB for GET /api/search/:id — non-fatal if DB is not configured.
+    try {
+      const expiresAt = new Date(Date.now() + response.ttl * 1000);
+      await db.insert(searches).values({
+        id: response.searchId,
+        preferences,
+        results: response as unknown as Record<string, unknown>,
+        expiresAt,
+      });
+    } catch (dbErr) {
+      console.warn('DB cache write skipped:', (dbErr as Error).message);
+    }
 
     return NextResponse.json(response, { status: 200 });
   } catch (err) {

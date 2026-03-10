@@ -9,15 +9,20 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const rows = await db.select().from(searches).where(eq(searches.id, id)).limit(1);
-  const row = rows[0];
-
-  if (!row) {
+  try {
+    const rows = await db.select().from(searches).where(eq(searches.id, id)).limit(1);
+    const row = rows[0];
+    if (!row) {
+      return NextResponse.json(
+        { error: 'NOT_FOUND', message: `Search ${id} not found or has expired`, statusCode: 404 },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json(row.results, { status: 200 });
+  } catch {
     return NextResponse.json(
       { error: 'NOT_FOUND', message: `Search ${id} not found or has expired`, statusCode: 404 },
       { status: 404 },
     );
   }
-
-  return NextResponse.json(row.results, { status: 200 });
 }
