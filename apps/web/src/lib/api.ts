@@ -1,25 +1,8 @@
 import type { SearchPreferences, SearchResponse } from '@travel-buddy/types';
 
-function normalizeBaseUrl(value: string): string {
-  return value.replace(/\/+$/, '');
-}
-
-function resolveApiBase(): string {
-  const configured = process.env['NEXT_PUBLIC_API_URL']?.trim();
-  if (configured) return normalizeBaseUrl(configured);
-
-  if (typeof window !== 'undefined') {
-    const { hostname, origin } = window.location;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:4000';
-    }
-    return normalizeBaseUrl(origin);
-  }
-
-  return 'http://localhost:4000';
-}
-
-const API_BASE = resolveApiBase();
+// Always use relative paths so this works on Vercel (Next.js API routes)
+// without any environment variable configuration.
+const API_BASE = '';
 
 export async function submitSearch(
   preferences: SearchPreferences,
@@ -32,9 +15,7 @@ export async function submitSearch(
       body: JSON.stringify({ preferences }),
     });
   } catch {
-    throw new Error(
-      `Unable to reach search API (${API_BASE}). Configure NEXT_PUBLIC_API_URL if your API is hosted elsewhere.`,
-    );
+    throw new Error('Unable to reach the search API. Please try again.');
   }
 
   if (!res.ok) {
@@ -52,9 +33,7 @@ export async function getSearchById(id: string): Promise<SearchResponse> {
   try {
     res = await fetch(`${API_BASE}/api/search/${id}`);
   } catch {
-    throw new Error(
-      `Unable to reach search API (${API_BASE}). Configure NEXT_PUBLIC_API_URL if your API is hosted elsewhere.`,
-    );
+    throw new Error('Unable to reach the search API. Please try again.');
   }
 
   if (!res.ok) {
