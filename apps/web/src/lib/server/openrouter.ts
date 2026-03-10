@@ -28,10 +28,6 @@ function diffNights(checkIn: string, checkOut: string): number {
   return Math.max(1, Math.floor((outUtc - inUtc) / (1000 * 60 * 60 * 24)));
 }
 
-function isLikelyHomepage(url: URL): boolean {
-  return (url.pathname === '/' || url.pathname === '') && !url.search;
-}
-
 function buildPlatformSearchUrl(
   platform: RawPropertyData['platforms'][number]['platform'],
   propertyName: string,
@@ -54,19 +50,13 @@ function buildPlatformSearchUrl(
 
 function normalizeBookingUrl(
   platform: RawPropertyData['platforms'][number]['platform'],
-  bookingUrl: unknown,
+  _bookingUrl: unknown,
   propertyName: string,
   prefs: SearchPreferences,
 ): string {
-  const asString = String(bookingUrl ?? '').trim();
-  if (!asString) return buildPlatformSearchUrl(platform, propertyName, prefs);
-  try {
-    const parsed = new URL(asString);
-    if (isLikelyHomepage(parsed)) return buildPlatformSearchUrl(platform, propertyName, prefs);
-    return parsed.toString();
-  } catch {
-    return buildPlatformSearchUrl(platform, propertyName, prefs);
-  }
+  // Always use a verified search URL rather than the LLM-generated direct link,
+  // which is almost always hallucinated and leads to a 404.
+  return buildPlatformSearchUrl(platform, propertyName, prefs);
 }
 
 function buildSystemPrompt(): string {
