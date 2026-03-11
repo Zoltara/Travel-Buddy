@@ -24,7 +24,7 @@ export default function AppleIcon() {
           borderRadius: '20px',
         }}
       >
-        ✈️
+        🗺️
       </div>
     ),
     {

@@ -105,12 +105,17 @@ function ResultsContent() {
     );
   }
 
+  const locationLabel =
+    state.location.city && state.location.country
+      ? ` in ${state.location.city}, ${state.location.country}`
+      : '';
+
   return (
     <div className="animate-fade-in space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Your Top {data.results.length} Picks ✨
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">
+          Your Top {data.results.length} Picks{locationLabel} ✨
         </h1>
         <p className="text-gray-500 text-sm">
           Ranked from {data.totalPropertiesFound} properties.{' '}
