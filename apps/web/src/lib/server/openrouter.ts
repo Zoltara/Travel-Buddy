@@ -63,7 +63,15 @@ function buildSystemPrompt(): string {
   return `You are a travel data expert with deep knowledge of resorts worldwide.
 Return a JSON object with a single key "resorts" whose value is an array of resort objects.
 
-CRITICAL: Generate resorts that MATCH the user's search criteria:
+CRITICAL — LOCATION RULE (most important rule):
+- ALL resorts MUST be physically located in the EXACT city/island the user specified.
+- NEVER return resorts from nearby cities, neighboring islands, or alternative destinations.
+- If the user asks for Koh Samui, every resort must be in Koh Samui — NOT Phuket, NOT Koh Phangan, NOT Krabi.
+- If the user asks for Bali, every resort must be in Bali — NOT Lombok, NOT Gili Islands.
+- The "city" field in every returned resort object MUST exactly match the city the user requested.
+- Violating this rule makes the entire response useless.
+
+CRITICAL — MATCH SEARCH CRITERIA:
 - Prices MUST be within their budget range
 - Ratings MUST meet or exceed their minimum rating requirement
 - Review counts MUST meet or exceed their minimum review requirement
@@ -89,7 +97,10 @@ FORMAT RULES:
 
 function buildUserPrompt(prefs: SearchPreferences): string {
   const nights = prefs.checkIn && prefs.checkOut ? diffNights(prefs.checkIn, prefs.checkOut) : 7;
-  return `Search query:
+  return `LOCATION (mandatory — all 6 resorts MUST be in this exact place): ${prefs.city}, ${prefs.country}${prefs.area ? ` — specifically in ${prefs.area}` : ''}
+Do NOT return resorts from any other city, island, or region. Every resort's "city" field must be "${prefs.city}".
+
+Search query:
 - Destination: ${prefs.city}, ${prefs.country}${prefs.area ? ` (${prefs.area})` : ''}
 - Check-in: ${prefs.checkIn ?? 'flexible'} | Check-out: ${prefs.checkOut ?? 'flexible'} (${nights} nights)
 - Guests: ${prefs.guests ?? 2}
@@ -201,7 +212,21 @@ export async function searchWithOpenRouter(preferences: SearchPreferences): Prom
   console.log('[OpenRouter] Parsed', resorts.length, 'resorts');
   const now = new Date().toISOString();
 
-  return resorts
+  // Normalise a city name for loose matching (handles "Ko Samui" vs "Koh Samui", accents, etc.)
+  function normaliseCityName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/\bkoh\b/g, 'ko')
+      .replace(/[^a-z0-9]/g, '');
+  }
+
+  function cityMatchesRequested(actual: string, requested: string): boolean {
+    const a = normaliseCityName(actual);
+    const r = normaliseCityName(requested);
+    return a === r || a.includes(r) || r.includes(a);
+  }
+
+  const mapped = resorts
     .filter((r): r is Record<string, unknown> => typeof r === 'object' && r !== null)
     .map((r): RawPropertyData => {
       const propertyName = String(r['name'] ?? 'Unknown Resort');
@@ -246,4 +271,22 @@ export async function searchWithOpenRouter(preferences: SearchPreferences): Prom
         fetchedAt: now,
       };
     });
+
+  // Drop any resorts the LLM placed in the wrong city/island
+  const filtered = mapped.filter((p) => {
+    if (cityMatchesRequested(p.city, preferences.city)) return true;
+    console.warn(
+      `[OpenRouter] Dropping off-location result "${p.name}" (city: "${p.city}", expected: "${preferences.city}")`,
+    );
+    return false;
+  });
+
+  if (filtered.length === 0) {
+    // All results were off-location — fall back to the unfiltered set rather than
+    // returning nothing, so the scorer at least has something to work with.
+    console.warn('[OpenRouter] All results failed location check — returning unfiltered set');
+    return mapped;
+  }
+
+  return filtered;
 }
