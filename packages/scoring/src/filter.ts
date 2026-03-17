@@ -8,6 +8,29 @@ export interface FilterResult {
   eliminated: Array<{ property: RawPropertyData; reason: string }>;
 }
 
+// ── Location helpers ──────────────────────────────────────────────────────────
+
+function normalisePlace(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip accents
+    .replace(/\bkoh\b/g, 'ko')       // "Koh Samui" ↔ "Ko Samui"
+    .replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Returns true if the two place names are a reasonable match.
+ * Uses substring matching so that "Seminyak" (district) passes
+ * when the user asked for "Bali" (island), and vice-versa.
+ */
+function placeMatches(actual: string, requested: string): boolean {
+  const a = normalisePlace(actual);
+  const r = normalisePlace(requested);
+  if (a === '' || r === '') return true; // no data – do not block
+  return a === r || a.includes(r) || r.includes(a);
+}
+
 export function applyHardFilters(
   properties: RawPropertyData[],
   prefs: SearchPreferences,
@@ -17,6 +40,21 @@ export function applyHardFilters(
 
   for (const prop of properties) {
     const reasons: string[] = [];
+
+    // ── Location filter ────────────────────────────────────────────────────
+    // Country must match (strict). City is lenient to allow districts/islands.
+    if (!placeMatches(prop.country, prefs.country)) {
+      reasons.push(
+        `Wrong country: property is in "${prop.country}", requested "${prefs.country}"`,
+      );
+    } else if (
+      !placeMatches(prop.city, prefs.city) &&
+      !placeMatches(prop.country, prefs.city) // handles "Maldives" as both city & country
+    ) {
+      reasons.push(
+        `Wrong location: property is in "${prop.city}", requested "${prefs.city}"`,
+      );
+    }
 
     // ── Rating filter ──────────────────────────────────────────────────────
     if (

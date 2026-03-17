@@ -282,10 +282,16 @@ export async function searchWithOpenRouter(preferences: SearchPreferences): Prom
   });
 
   if (filtered.length === 0) {
-    // All results were off-location — fall back to the unfiltered set rather than
-    // returning nothing, so the scorer at least has something to work with.
-    console.warn('[OpenRouter] All results failed location check — returning unfiltered set');
-    return mapped;
+    // All results were off-location. This means the LLM ignored the location
+    // constraint entirely. Throw so the caller surfaces a clear error rather
+    // than showing results from the wrong destination.
+    console.error(
+      `[OpenRouter] All ${mapped.length} results failed location check (expected "${preferences.city}"). ` +
+        `Cities returned: ${[...new Set(mapped.map((p) => p.city))].join(', ')}`,
+    );
+    throw new Error(
+      `The AI returned resorts for the wrong location. Please try your search again.`,
+    );
   }
 
   return filtered;

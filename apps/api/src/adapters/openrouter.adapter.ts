@@ -36,11 +36,6 @@ function diffNights(checkIn: string, checkOut: string): number {
   return Math.max(1, Math.floor((outUtc - inUtc) / (1000 * 60 * 60 * 24)));
 }
 
-function isLikelyHomepage(url: URL): boolean {
-  const hasSimplePath = url.pathname === '/' || url.pathname === '';
-  return hasSimplePath && !url.search;
-}
-
 function buildPlatformSearchUrl(
   platform: RawPropertyData['platforms'][number]['platform'],
   propertyName: string,
@@ -64,24 +59,33 @@ function buildPlatformSearchUrl(
 
 function normalizeBookingUrl(
   platform: RawPropertyData['platforms'][number]['platform'],
-  bookingUrl: unknown,
+  _bookingUrl: unknown,
   propertyName: string,
   prefs: SearchPreferences,
 ): string {
-  const asString = String(bookingUrl ?? '').trim();
-  if (!asString) {
-    return buildPlatformSearchUrl(platform, propertyName, prefs);
-  }
+  // Always use a verified search URL rather than the LLM-generated direct link,
+  // which is almost always hallucinated and leads to a 404 or wrong property.
+  return buildPlatformSearchUrl(platform, propertyName, prefs);
+}
 
-  try {
-    const parsed = new URL(asString);
-    if (isLikelyHomepage(parsed)) {
-      return buildPlatformSearchUrl(platform, propertyName, prefs);
-    }
-    return parsed.toString();
-  } catch {
-    return buildPlatformSearchUrl(platform, propertyName, prefs);
-  }
+// ── Prompt builder ────────────────────────────────────────────────────────────
+
+// ── City-name normalisation (mirrors the scoring filter) ─────────────────────
+
+function normaliseCityName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\bkoh\b/g, 'ko')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function cityMatchesRequested(actual: string, requested: string): boolean {
+  const a = normaliseCityName(actual);
+  const r = normaliseCityName(requested);
+  if (a === '' || r === '') return true;
+  return a === r || a.includes(r) || r.includes(a);
 }
 
 // ── Prompt builder ────────────────────────────────────────────────────────────
@@ -90,7 +94,15 @@ function buildSystemPrompt(): string {
   return `You are a travel data expert with deep knowledge of resorts worldwide.
 Return a JSON object with a single key "resorts" whose value is an array of resort objects.
 
-CRITICAL: Generate resorts that MATCH the user's search criteria:
+CRITICAL — LOCATION RULE (most important rule):
+- ALL resorts MUST be physically located in the EXACT city/island the user specified.
+- NEVER return resorts from nearby cities, neighboring islands, or alternative destinations.
+- If the user asks for Koh Samui, every resort must be in Koh Samui — NOT Phuket, NOT Koh Phangan, NOT Krabi.
+- If the user asks for Bali, every resort must be in Bali — NOT Lombok, NOT Gili Islands.
+- The "city" field in every returned resort object MUST exactly match the city the user requested.
+- Violating this rule makes the entire response useless.
+
+CRITICAL — MATCH SEARCH CRITERIA:
 - Prices MUST be within their budget range
 - Ratings MUST meet or exceed their minimum rating requirement
 - Review counts MUST meet or exceed their minimum review requirement
@@ -120,8 +132,11 @@ function buildUserPrompt(prefs: SearchPreferences): string {
       ? diffNights(prefs.checkIn, prefs.checkOut)
       : 7;
 
-  return `Search query:
-- Destination: ${prefs.city}, ${prefs.country}${prefs.area ? ` (${prefs.area})` : ''}
+  return `LOCATION (mandatory — all 12 resorts MUST be in this exact place): ${prefs.city}, ${prefs.country}${prefs.area ? ` — specifically in ${prefs.area}` : ''}
+Do NOT return resorts from any other city, island, or region. Every resort's "city" field must be "${prefs.city}".
+
+Search query:
+- Destination: ${prefs.city}, ${prefs.country}${prefs.area ? ` (${prefs.area})` : ''}`
 - Check-in: ${prefs.checkIn ?? 'flexible'} | Check-out: ${prefs.checkOut ?? 'flexible'} (${nights} nights)
 - Guests: ${prefs.guests ?? 2}
 - Budget per night: $${prefs.budgetPerNightMin ?? 0}–$${prefs.budgetPerNightMax ?? 9999} USD${prefs.flexibleBudget ? ' (flexible - can show slightly over)' : ' (strict - do not exceed)'}
@@ -291,5 +306,26 @@ export class OpenRouterAdapter implements PlatformAdapter {
           fetchedAt: now,
         };
       });
+
+    // Drop any resorts the LLM placed in the wrong city/island
+    const filtered = mapped.filter((p) => {
+      if (cityMatchesRequested(p.city, preferences.city)) return true;
+      console.warn(
+        `[OpenRouter] Dropping off-location result "${p.name}" (city: "${p.city}", expected: "${preferences.city}")`,
+      );
+      return false;
+    });
+
+    if (filtered.length === 0) {
+      console.error(
+        `[OpenRouter] All ${mapped.length} results failed location check (expected "${preferences.city}"). ` +
+          `Cities returned: ${[...new Set(mapped.map((p) => p.city))].join(', ')}`,
+      );
+      throw new Error(
+        `The AI returned resorts for the wrong location. Please try your search again.`,
+      );
+    }
+
+    return filtered;
   }
 }
