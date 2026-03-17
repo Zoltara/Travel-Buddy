@@ -118,7 +118,7 @@ function buildUserPrompt(prefs: SearchPreferences): string {
 Do NOT return resorts from any other city, island, or region. Every resort's "city" field must be "${prefs.city}".
 
 Search query:
-- Destination: ${prefs.city}, ${prefs.country}${prefs.area ? ` (${prefs.area})` : ''}`
+- Destination: ${prefs.city}, ${prefs.country}${prefs.area ? ` (${prefs.area})` : ''}
 - Check-in: ${prefs.checkIn ?? 'flexible'} | Check-out: ${prefs.checkOut ?? 'flexible'} (${nights} nights)
 - Guests: ${prefs.guests ?? 2}
 - Budget per night: $${prefs.budgetPerNightMin ?? 0}–$${prefs.budgetPerNightMax ?? 9999} USD${prefs.flexibleBudget ? ' (flexible - can show slightly over)' : ' (strict - do not exceed)'}
@@ -242,7 +242,7 @@ export class OpenRouterAdapter implements PlatformAdapter {
 
     const now = new Date().toISOString();
 
-    return resorts
+    const mapped = resorts
       .filter((r): r is Record<string, unknown> => typeof r === 'object' && r !== null)
       .map((r): RawPropertyData => {
         const propertyName = String(r['name'] ?? 'Unknown Resort');
