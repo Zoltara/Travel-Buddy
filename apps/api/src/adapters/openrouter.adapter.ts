@@ -5,7 +5,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { RawPropertyData, SearchPreferences } from '@travel-buddy/types';
 import type { PlatformAdapter } from './base.js';
-import { env } from '../utils/env.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -186,13 +185,13 @@ export class OpenRouterAdapter implements PlatformAdapter {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${process.env['OPENROUTER_API_KEY'] ?? ''}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://travelbuddy.app',
         'X-Title': 'Travel Buddy',
       },
       body: JSON.stringify({
-        model: env.OPENROUTER_MODEL,
+        model: process.env['OPENROUTER_MODEL'] ?? 'openai/gpt-4o-mini',
         messages,
         temperature: 0.4,
         max_tokens: 8192,
