@@ -4,7 +4,7 @@
 // merges cross-platform data, and returns a unified property list.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { RawPropertyData, SearchPreferences } from '@travel-buddy/types';
-import { GooglePlacesAdapter } from '../adapters/googleplaces.adapter.js';
+import { OpenRouterAdapter } from '../adapters/openrouter.adapter.js';
 
 export interface AggregatorResult {
   properties: RawPropertyData[];
@@ -148,7 +148,7 @@ export async function aggregateProperties(
 ): Promise<AggregatorResult> {
   console.log('[Aggregator] Starting property aggregation');
   
-  const adapter = new GooglePlacesAdapter();
+  const adapter = new OpenRouterAdapter();
   const platformsQueried: string[] = [];
   const platformsFailed: string[] = [];
   const allProperties: RawPropertyData[] = [];
@@ -157,11 +157,11 @@ export async function aggregateProperties(
     const results = await adapter.search(preferences);
     platformsQueried.push(adapter.name);
     allProperties.push(...results);
-    console.log('[Aggregator] Google Places returned', results.length, 'properties');
+    console.log('[Aggregator] OpenRouter returned', results.length, 'properties');
   } catch (err) {
     platformsFailed.push(adapter.name);
     const errorMsg = (err as Error)?.message ?? String(err);
-    console.error('[Aggregator] Google Places failed:', errorMsg);
+    console.error('[Aggregator] OpenRouter failed:', errorMsg);
     throw new Error(`Failed to search resorts: ${errorMsg}`);
   }
 

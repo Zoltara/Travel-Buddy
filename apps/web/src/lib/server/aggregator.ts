@@ -1,5 +1,5 @@
 import type { RawPropertyData, SearchPreferences } from '@travel-buddy/types';
-import { searchWithGooglePlaces } from './googleplaces';
+import { searchWithOpenRouter } from './openrouter';
 
 export interface AggregatorResult {
   properties: RawPropertyData[];
@@ -93,10 +93,10 @@ export async function aggregateProperties(preferences: SearchPreferences): Promi
 
   let results: RawPropertyData[];
   try {
-    results = await searchWithGooglePlaces(preferences);
-    platformsQueried.push('google-places');
+    results = await searchWithOpenRouter(preferences);
+    platformsQueried.push('openrouter');
   } catch (err) {
-    platformsFailed.push('google-places');
+    platformsFailed.push('openrouter');
     const errorMsg = (err as Error)?.message ?? String(err);
     throw new Error(`Failed to search resorts: ${errorMsg}`);
   }
