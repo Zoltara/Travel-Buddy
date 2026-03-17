@@ -4,7 +4,7 @@
 // merges cross-platform data, and returns a unified property list.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { RawPropertyData, SearchPreferences } from '@travel-buddy/types';
-import { OpenRouterAdapter } from '../adapters/openrouter.adapter.js';
+import { GooglePlacesAdapter } from '../adapters/googleplaces.adapter.js';
 
 export interface AggregatorResult {
   properties: RawPropertyData[];
@@ -148,7 +148,7 @@ export async function aggregateProperties(
 ): Promise<AggregatorResult> {
   console.log('[Aggregator] Starting property aggregation');
   
-  const adapter = new OpenRouterAdapter();
+  const adapter = new GooglePlacesAdapter();
   const platformsQueried: string[] = [];
   const platformsFailed: string[] = [];
   const allProperties: RawPropertyData[] = [];
@@ -157,19 +157,16 @@ export async function aggregateProperties(
     const results = await adapter.search(preferences);
     platformsQueried.push(adapter.name);
     allProperties.push(...results);
-    console.log('[Aggregator] OpenRouter returned', results.length, 'properties');
+    console.log('[Aggregator] Google Places returned', results.length, 'properties');
   } catch (err) {
     platformsFailed.push(adapter.name);
     const errorMsg = (err as Error)?.message ?? String(err);
-    console.error('[Aggregator] OpenRouter failed:', errorMsg);
-    
-    // Provide specific error messages for common issues
-    if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
-      throw new Error('OpenRouter API key is invalid or missing. Please check your OPENROUTER_API_KEY environment variable.');
-    } else if (errorMsg.includes('rate limit') || errorMsg.includes('429')) {
-      throw new Error('OpenRouter rate limit exceeded. Please try again in a few minutes.');
-    } else if (errorMsg.includes('zero resorts')) {
-      throw new Error('No resorts could be generated for this location. Try a different destination or relax your filters.');
+    console.error('[Aggregator] Google Places failed:', errorMsg);
+
+    if (errorMsg.includes('REQUEST_DENIED') || errorMsg.includes('INVALID_REQUEST')) {
+      throw new Error('Google Maps API key is invalid or missing. Please check your GOOGLE_MAPS_API_KEY environment variable.');
+    } else if (errorMsg.includes('OVER_QUERY_LIMIT') || errorMsg.includes('quota')) {
+      throw new Error('Google Maps API quota exceeded. Please try again later.');
     } else {
       throw new Error(`Failed to search resorts: ${errorMsg}`);
     }

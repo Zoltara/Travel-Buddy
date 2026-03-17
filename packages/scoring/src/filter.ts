@@ -111,9 +111,11 @@ export function applyHardFilters(
     }
 
     // ── Must-have amenities (hard block only if user toggled "beachfront") ─
+    // Skip if confirmedAmenities is empty (no data from source, e.g. Google Maps).
     // Soft amenities handled via amenitiesScore; only "beachfront" is a hard filter
     if (
       prefs.mustHaveAmenities.includes('beachfront') &&
+      prop.confirmedAmenities.length > 0 &&
       !prop.confirmedAmenities.includes('beachfront')
     ) {
       reasons.push('Property is not beachfront');

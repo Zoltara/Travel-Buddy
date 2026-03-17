@@ -139,7 +139,9 @@ export function ResortCard({ resort, currency = 'USD' }: ResortCardProps) {
             rel="noopener noreferrer"
             className="flex-1 py-3 bg-brand-600 text-white text-sm font-bold rounded-xl text-center hover:bg-brand-700 transition-colors"
           >
-            Book Now →
+            {resort.primaryBookingRef.platform === 'google-places'
+              ? '📍 View on Google Maps →'
+              : 'Book Now →'}
           </a>
           {resort.platforms
             .filter((p) => p.platform !== resort.primaryBookingRef.platform && p.bookingUrl)

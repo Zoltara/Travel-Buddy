@@ -21,9 +21,8 @@ export const env = {
   // Database
   NEON_DATABASE_URL: requireEnv('NEON_DATABASE_URL'),
 
-  // OpenRouter (LLM-powered resort search)
-  OPENROUTER_API_KEY: requireEnv('OPENROUTER_API_KEY'),
-  OPENROUTER_MODEL: optionalEnv('OPENROUTER_MODEL', 'openai/gpt-4o-mini'),
+  // Google Maps (Places API for real resort search)
+  GOOGLE_MAPS_API_KEY: requireEnv('GOOGLE_MAPS_API_KEY'),
 
   get isDev() {
     return this.NODE_ENV === 'development';
