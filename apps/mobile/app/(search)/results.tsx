@@ -148,16 +148,8 @@ function ResortCard({ resort, currency }: { resort: ScoredResort; currency: Curr
         onPress={() => Linking.openURL(resort.primaryBookingRef.bookingUrl)}
         style={styles.bookBtn}
       >
-        <Text style={styles.bookBtnText}>
-            {resort.primaryBookingRef.platform === 'google-places' ? '📍 View on Google Maps' : 'Book Now →'}
-          </Text>
+        <Text style={styles.bookBtnText}>📍 Check it out on Google Maps</Text>
       </TouchableOpacity>
-
-      {resort.platforms.filter((p) => p.platform !== resort.primaryBookingRef.platform && p.bookingUrl).slice(0, 2).map((p) => (
-        <TouchableOpacity key={p.platform} onPress={() => Linking.openURL(p.bookingUrl)} style={styles.altLink}>
-          <Text style={styles.altLinkText}>Also on {p.platform} →</Text>
-        </TouchableOpacity>
-      ))}
     </View>
   );
 }

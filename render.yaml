@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     rootDir: apps/api
-    buildCommand: corepack enable && pnpm install && cd ../.. && pnpm --filter @travel-buddy/api build
+    buildCommand: corepack enable && pnpm install && cd ../.. && pnpm --filter @travel-buddy/types build && pnpm --filter @travel-buddy/scoring build && pnpm --filter @travel-buddy/api build
     startCommand: pnpm start
     envVars:
       - key: NODE_ENV

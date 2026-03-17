@@ -28,35 +28,18 @@ function diffNights(checkIn: string, checkOut: string): number {
   return Math.max(1, Math.floor((outUtc - inUtc) / (1000 * 60 * 60 * 24)));
 }
 
-function buildPlatformSearchUrl(
-  platform: RawPropertyData['platforms'][number]['platform'],
-  propertyName: string,
-  prefs: SearchPreferences,
-): string {
+function googleMapsUrl(propertyName: string, prefs: SearchPreferences): string {
   const query = encodeURIComponent(`${propertyName} ${prefs.city} ${prefs.country}`);
-  switch (platform) {
-    case 'booking.com':
-      return `https://www.booking.com/searchresults.html?ss=${query}&checkin=${prefs.checkIn}&checkout=${prefs.checkOut}&group_adults=${prefs.guests}`;
-    case 'expedia':
-      return `https://www.expedia.com/Hotel-Search?destination=${query}&startDate=${prefs.checkIn}&endDate=${prefs.checkOut}&adults=${prefs.guests}`;
-    case 'agoda':
-      return `https://www.agoda.com/search?textToSearch=${query}&checkIn=${prefs.checkIn}&checkOut=${prefs.checkOut}&adults=${prefs.guests}`;
-    case 'tripadvisor':
-      return `https://www.tripadvisor.com/Search?q=${query}`;
-    default:
-      return `https://www.google.com/search?q=${query}`;
-  }
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
 function normalizeBookingUrl(
-  platform: RawPropertyData['platforms'][number]['platform'],
+  _platform: RawPropertyData['platforms'][number]['platform'],
   _bookingUrl: unknown,
   propertyName: string,
   prefs: SearchPreferences,
 ): string {
-  // Always use a verified search URL rather than the LLM-generated direct link,
-  // which is almost always hallucinated and leads to a 404.
-  return buildPlatformSearchUrl(platform, propertyName, prefs);
+  return googleMapsUrl(propertyName, prefs);
 }
 
 function buildSystemPrompt(): string {

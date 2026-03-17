@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import {
   convertFromUsd,
   formatMoney,
@@ -33,32 +32,17 @@ export function ResortCard({ resort, currency = 'USD' }: ResortCardProps) {
         styles.border,
       )}
     >
-      {/* Photo banner */}
-      <div className="relative h-48 bg-gradient-to-br from-brand-100 to-sand-100">
-        {resort.photoUrl ? (
-          <Image
-            src={resort.photoUrl}
-            alt={resort.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 672px"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-30">
-            🏖️
-          </div>
-        )}
-        {/* Rank badge */}
-        <div className={cn('absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold', styles.badge)}>
-          {label}
-        </div>
-        {/* Score pill */}
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-gray-800">
-          {resort.score.totalScore.toFixed(1)}/10
-        </div>
-      </div>
-
       <div className="p-5 space-y-4">
+        {/* Rank + score row */}
+        <div className="flex items-center justify-between">
+          <span className={cn('px-3 py-1 rounded-full text-xs font-bold', styles.badge)}>
+            {label}
+          </span>
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">
+            {resort.score.totalScore.toFixed(1)}/10
+          </span>
+        </div>
+
         {/* Name + location */}
         <div>
           <h2 className="text-xl font-bold text-gray-900">{resort.name}</h2>
@@ -131,33 +115,15 @@ export function ResortCard({ resort, currency = 'USD' }: ResortCardProps) {
         {/* Score breakdown (collapsed) */}
         <ScoreBreakdown score={resort.score} />
 
-        {/* Booking links */}
-        <div className="flex gap-2 flex-wrap pt-1">
-          <a
-            href={resort.primaryBookingRef.bookingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-3 bg-brand-600 text-white text-sm font-bold rounded-xl text-center hover:bg-brand-700 transition-colors"
-          >
-            {resort.primaryBookingRef.platform === 'google-places'
-              ? '📍 View on Google Maps →'
-              : 'Book Now →'}
-          </a>
-          {resort.platforms
-            .filter((p) => p.platform !== resort.primaryBookingRef.platform && p.bookingUrl)
-            .slice(0, 2)
-            .map((p) => (
-              <a
-                key={p.platform}
-                href={p.bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-3 border border-gray-200 text-gray-600 text-xs font-medium rounded-xl hover:bg-gray-50 transition-colors capitalize"
-              >
-                {p.platform}
-              </a>
-            ))}
-        </div>
+        {/* Google Maps link */}
+        <a
+          href={resort.primaryBookingRef.bookingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full py-3 bg-brand-600 text-white text-sm font-bold rounded-xl text-center hover:bg-brand-700 transition-colors mt-1"
+        >
+          📍 Check it out on Google Maps
+        </a>
       </div>
     </div>
   );
