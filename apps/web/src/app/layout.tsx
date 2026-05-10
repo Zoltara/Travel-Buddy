@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     description: 'Stop comparing 47 tabs. Get 3 perfect resort picks.',
     type: 'website',
   },
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   icons: {
     icon: [
       { url: '/icon', sizes: '32x32', type: 'image/png' },
